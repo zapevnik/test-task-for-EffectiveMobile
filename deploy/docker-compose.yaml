@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: adm
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: subscriptions
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adm"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  app:
+    build:
+      context: .. 
+      dockerfile: deploy/Dockerfile
+    environment:
+      CONFIG_PATH: /app/config/config.yaml
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
