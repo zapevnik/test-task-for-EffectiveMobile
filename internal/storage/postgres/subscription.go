@@ -185,7 +185,7 @@ func (s *SubscriptionStorage) TotalCost(
 	ctx context.Context,
 	userID *uuid.UUID,
 	serviceName *string,
-	from, to domain.YearMonth,
+	from, to time.Time,
 ) (int64, error) {
 	s.logger.Info("TotalCost calculation started", "from", from.Format("01-2006"), "to", to.Format("01-2006"))
 	if userID != nil {
@@ -200,7 +200,7 @@ func (s *SubscriptionStorage) TotalCost(
 		FROM subscriptions
 		WHERE start_date >= $1 AND start_date <= $2
 	`
-	args := []interface{}{from.Time, to.Time}
+	args := []interface{}{from, to}
 	argIdx := 3
 
 	if userID != nil {

@@ -3,8 +3,10 @@ package subscription
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"subscription-service/internal/domain"
+
 	"github.com/google/uuid"
 )
 
@@ -14,7 +16,7 @@ type Storage interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Subscription, error)
 	Update(ctx context.Context, sub *domain.Subscription) error
 	Delete(ctx context.Context, id uuid.UUID) error
-	TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, from, to domain.YearMonth) (int64, error)
+	TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, from, to time.Time) (int64, error)
 }
 
 type Service struct {
@@ -81,12 +83,12 @@ func (s *Service) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *Service) TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, from, to domain.YearMonth) (int64, error) {
+func (s *Service) TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, from, to time.Time) (int64, error) {
 	s.logger.Debug("service: calculate total cost",
 		"user_id", userID,
 		"service_name", serviceName,
-		"from", from.Time,
-		"to", to.Time,
+		"from", from,
+		"to", to,
 	)
 	total, err := s.storage.TotalCost(ctx, userID, serviceName, from, to)
 	if err != nil {

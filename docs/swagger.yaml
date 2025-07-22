@@ -1,0 +1,204 @@
+basePath: /
+definitions:
+  dto.SubscriptionRequestDTO:
+    properties:
+      end_date:
+        example: 12-2024
+        type: string
+      price:
+        example: 499
+        type: integer
+      service_name:
+        example: Netflix
+        type: string
+      start_date:
+        example: 07-2024
+        type: string
+      user_id:
+        example: e5c7c66b-4a3e-4728-84d9-b6c6b46ef1a6
+        type: string
+    type: object
+  dto.SubscriptionResponseDTO:
+    properties:
+      end_date:
+        example: 12-2024
+        type: string
+      id:
+        example: 696c530f-b6c5-467f-ab70-45916e72daa7
+        type: string
+      price:
+        example: 499
+        type: integer
+      service_name:
+        example: Netflix
+        type: string
+      start_date:
+        example: 07-2024
+        type: string
+      user_id:
+        example: e5c7c66b-4a3e-4728-84d9-b6c6b46ef1a6
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API для управления подписками пользователей
+  title: Subscription Service API
+  version: "1.0"
+paths:
+  /subscriptions:
+    get:
+      description: Get list of all subscriptions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.SubscriptionResponseDTO'
+            type: array
+        "500":
+          description: internal error
+          schema:
+            type: string
+      summary: Get all subscriptions
+      tags:
+      - subscriptions
+    post:
+      consumes:
+      - application/json
+      description: Create a new subscription
+      parameters:
+      - description: Subscription request
+        in: body
+        name: subscription
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SubscriptionRequestDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.SubscriptionResponseDTO'
+        "400":
+          description: invalid request
+          schema:
+            type: string
+        "500":
+          description: internal error
+          schema:
+            type: string
+      summary: Create subscription
+      tags:
+      - subscriptions
+  /subscriptions/{id}:
+    delete:
+      description: Delete a subscription by ID
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: invalid id
+          schema:
+            type: string
+        "500":
+          description: internal error
+          schema:
+            type: string
+      summary: Delete subscription
+      tags:
+      - subscriptions
+    put:
+      consumes:
+      - application/json
+      description: Update a subscription by its ID
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Subscription update
+        in: body
+        name: subscription
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SubscriptionRequestDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SubscriptionResponseDTO'
+        "400":
+          description: invalid input
+          schema:
+            type: string
+        "500":
+          description: internal error
+          schema:
+            type: string
+      summary: Update subscription
+      tags:
+      - subscriptions
+  /subscriptions/total:
+    get:
+      description: Calculate total subscription cost in date range, optional filters
+        by user and service
+      parameters:
+      - description: Start month in MM-YYYY format
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: End month in MM-YYYY format
+        in: query
+        name: to
+        required: true
+        type: string
+      - description: User UUID
+        in: query
+        name: user_id
+        type: string
+      - description: Service name
+        in: query
+        name: service_name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              format: int64
+              type: integer
+            type: object
+        "400":
+          description: invalid input
+          schema:
+            type: string
+        "500":
+          description: internal error
+          schema:
+            type: string
+      summary: Calculate total subscription cost
+      tags:
+      - subscriptions
+swagger: "2.0"

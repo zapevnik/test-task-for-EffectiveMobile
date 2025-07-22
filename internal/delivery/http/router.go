@@ -3,7 +3,7 @@ package http
 import (
 	"net/http"
 	"time"
-
+	httpSwagger "github.com/swaggo/http-swagger"
 	"github.com/go-chi/chi/v5"
 	"log/slog"
 )
@@ -38,5 +38,6 @@ func NewRouter(h *Handler, logger *slog.Logger) http.Handler {
 		r.Put("/{id}", h.Update)
 		r.Delete("/{id}", h.Delete)
 	})
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
 	return r
 }

@@ -1,7 +1,11 @@
+// @title Subscription Service API
+// @version 1.0
+// @description API для управления подписками пользователей
+// @host localhost:8080
+// @BasePath /
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"log/slog"
@@ -9,19 +13,22 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
-
+	_ "subscription-service/docs"
 	"subscription-service/internal/config"
 	httpDelivery "subscription-service/internal/delivery/http"
-	"subscription-service/internal/logger"
+	"subscription-service/pkg/logger"
+
+	"subscription-service/pkg/storage"
 	"subscription-service/internal/storage/postgres"
 	"subscription-service/internal/usecase/subscription"
 )
 
+const defaultConfigPath string = "config/config.yaml"
 
 func main() {
 	path := os.Getenv("CONFIG_PATH")
 	if path == "" {
-		path = "config/config.yaml"
+		path = defaultConfigPath
 	}
 
 	cfg, err := config.LoadConfig(path)
@@ -29,46 +36,20 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	var level slog.Level
 
-	switch cfg.LogLevel {
-	case "debug":
-			level = slog.LevelDebug
-	case "info":
-			level = slog.LevelInfo
-	case "warn":
-			level = slog.LevelWarn
-	case "error":
-			level = slog.LevelError
-	default:
-			level = slog.LevelInfo
-	}
-
-	logger.Init(level)
+	logger.Init(cfg.LogLevel)
 	slog.SetDefault(logger.Log)
 	slog.Info("config loaded:", "path", path)
 
-	connStr := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		cfg.Database.Host,
-		cfg.Database.Port,
-		cfg.Database.User,
-		cfg.Database.Password,
-		cfg.Database.Name,
-		cfg.Database.SSLMode,
-	)
-
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-    slog.Error("failed to connect database", "error", err)
-    os.Exit(1)
-	}
+	db := storage.NewPostgresDB(storage.Config{
+    Host:     cfg.Database.Host,
+    Port:     cfg.Database.Port,
+    User:     cfg.Database.User,
+    Password: cfg.Database.Password,
+    Name:     cfg.Database.Name,
+    SSLMode:  cfg.Database.SSLMode,
+	})
 	defer db.Close()
-
-	if err := db.Ping(); err != nil {
-    slog.Error("failed to ping database", "error", err)
-    os.Exit(1)
-	}
 
 	storage := postgres.NewSubscriptionStorage(db, logger.Log)
 	service := subscription.NewService(storage, logger.Log)

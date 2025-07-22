@@ -33,3 +33,4 @@ func (ym *YearMonth) UnmarshalJSON(b []byte) error {
 func (ym YearMonth) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + ym.Time.Format("01-2006") + `"`), nil
 }
+
