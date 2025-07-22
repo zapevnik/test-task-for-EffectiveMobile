@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"time"
 
 	"subscription-service/internal/domain"
 
@@ -15,7 +14,7 @@ type Storage interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Subscription, error)
 	Update(ctx context.Context, sub *domain.Subscription) error
 	Delete(ctx context.Context, id uuid.UUID) error
-	TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, from, to time.Time) (int64, error)
+	TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, from, to domain.YearMonth) (int64, error)
 }
 
 type SubscriptionService struct {
@@ -46,6 +45,6 @@ func (s *SubscriptionService) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.storage.Delete(ctx, id)
 }
 
-func (s *SubscriptionService) TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, from, to time.Time) (int64, error) {
+func (s *SubscriptionService) TotalCost(ctx context.Context, userID *uuid.UUID, serviceName *string, from, to domain.YearMonth) (int64, error) {
 	return s.storage.TotalCost(ctx, userID, serviceName, from, to)
 }

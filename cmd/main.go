@@ -4,58 +4,81 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"log/slog"
+	"net/http"
 	"os"
 
-	"gopkg.in/yaml.v3"
 	_ "github.com/lib/pq"
+
+	"subscription-service/internal/config"
+	httpDelivery "subscription-service/internal/delivery/http"
+	"subscription-service/internal/logger"
+	"subscription-service/internal/storage/postgres"
+	"subscription-service/internal/usecase/subscription"
 )
 
-type Config struct {
-	Postgres struct {
-		Host     string `yaml:"host"`
-		Port     int    `yaml:"port"`
-		User     string `yaml:"user"`
-		Password string `yaml:"password"`
-		DBName   string `yaml:"dbname"`
-		SSLMode  string `yaml:"sslmode"`
-	} `yaml:"postgres"`
-}
 
 func main() {
 	path := os.Getenv("CONFIG_PATH")
 	if path == "" {
-		path = "config/config.yaml" // для локального запуска
+		path = "config/config.yaml"
 	}
 
-	f, err := os.Open(path)
+	cfg, err := config.LoadConfig(path)
 	if err != nil {
-		log.Fatalf("cannot open config: %v", err)
+		log.Fatalf("failed to load config: %v", err)
 	}
 
-	var cfg Config
-	if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
-		log.Fatal(err)
+	var level slog.Level
+
+	switch cfg.LogLevel {
+	case "debug":
+			level = slog.LevelDebug
+	case "info":
+			level = slog.LevelInfo
+	case "warn":
+			level = slog.LevelWarn
+	case "error":
+			level = slog.LevelError
+	default:
+			level = slog.LevelInfo
 	}
+
+	logger.Init(level)
+	slog.SetDefault(logger.Log)
+	slog.Info("config loaded:", "path", path)
 
 	connStr := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		cfg.Postgres.Host,
-		cfg.Postgres.Port,
-		cfg.Postgres.User,
-		cfg.Postgres.Password,
-		cfg.Postgres.DBName,
-		cfg.Postgres.SSLMode,
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.User,
+		cfg.Database.Password,
+		cfg.Database.Name,
+		cfg.Database.SSLMode,
 	)
-	log.Println(connStr)
+
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal(err)
+    slog.Error("failed to connect database", "error", err)
+    os.Exit(1)
 	}
 	defer db.Close()
 
 	if err := db.Ping(); err != nil {
-		log.Fatal(err)
+    slog.Error("failed to ping database", "error", err)
+    os.Exit(1)
 	}
 
-	log.Println("started")
+	storage := postgres.NewSubscriptionStorage(db, logger.Log)
+	service := subscription.NewService(storage, logger.Log)
+	handler := httpDelivery.NewHandler(service, logger.Log)
+	router := httpDelivery.NewRouter(handler, logger.Log)
+
+	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
+	slog.Info("server starting", "addr", addr)
+	if err := http.ListenAndServe(addr, router); err != nil {
+    slog.Error("server failed", "error", err)
+    os.Exit(1)
+	}
 }

@@ -1,8 +1,20 @@
 services:
+  migrate:
+    image: migrate/migrate
+    volumes:
+      - ../migrations:/migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "migrate -path=/migrations
+      -database postgres://admin:123@postgres:5432/subscriptions?sslmode=disable
+      up"
   postgres:
     image: postgres:15
     environment:
-      POSTGRES_USER: adm
+      POSTGRES_USER: admin
       POSTGRES_PASSWORD: 123
       POSTGRES_DB: subscriptions
     ports:
@@ -10,11 +22,11 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U adm"]
+      test: [ "CMD-SHELL", "pg_isready -U admin -d subscriptions" ]
       interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 10s 
 
   app:
     build:

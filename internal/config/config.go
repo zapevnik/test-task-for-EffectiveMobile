@@ -17,9 +17,11 @@ type Config struct {
 		Port     string `yaml:"port"`
 		User     string `yaml:"user"`
 		Password string `yaml:"password"`
-		Name     string `yaml:"name"`
+		Name     string `yaml:"dbname"`
 		SSLMode  string `yaml:"sslmode"`
-	} `yaml:"database"`
+	} `yaml:"postgres"`
+
+	LogLevel string `yaml:"log_level"`
 }
 
 func LoadConfig(path string) (*Config, error) {
