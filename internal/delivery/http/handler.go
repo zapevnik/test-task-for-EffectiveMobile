@@ -8,7 +8,7 @@ import (
 
 	"subscription-service/internal/usecase/subscription"
 	"subscription-service/internal/delivery/dto"
-	"subscription-service/pkg/dtoConv"
+	dtoConv "subscription-service/pkg/utils"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"

@@ -23,7 +23,7 @@ import (
 	"subscription-service/internal/usecase/subscription"
 )
 
-const defaultConfigPath string = "config/config.yaml"
+const defaultConfigPath string = "config/config.example.yaml"
 
 func main() {
 	path := os.Getenv("CONFIG_PATH")
@@ -41,14 +41,7 @@ func main() {
 	slog.SetDefault(logger.Log)
 	slog.Info("config loaded:", "path", path)
 
-	db := storage.NewPostgresDB(storage.Config{
-    Host:     cfg.Database.Host,
-    Port:     cfg.Database.Port,
-    User:     cfg.Database.User,
-    Password: cfg.Database.Password,
-    Name:     cfg.Database.Name,
-    SSLMode:  cfg.Database.SSLMode,
-	})
+	db := storage.NewPostgresDB(storage.Config(cfg.Database))
 	defer db.Close()
 
 	storage := postgres.NewSubscriptionStorage(db, logger.Log)

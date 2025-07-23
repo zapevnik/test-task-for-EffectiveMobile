@@ -33,7 +33,7 @@ services:
       context: .. 
       dockerfile: deploy/Dockerfile
     environment:
-      CONFIG_PATH: /app/config/config.yaml
+      CONFIG_PATH: /app/config/config.example.yaml
     ports:
       - "8080:8080"
     depends_on:
